@@ -41,8 +41,9 @@ module front_end
     output [FE_DATA_W-1:0]                      data_wdata_reg,
     output [FE_NBYTES-1:0]                      data_wstrb_reg,
     //cache-control
-    output                                      ctrl_valid,
+    output                                      ctrl_valid,     
     output [`CTRL_ADDR_W-1:0]                   ctrl_addr, 
+    output reg [7:0]                            debug_output,     
     input [CTRL_CACHE*(FE_DATA_W-1):0]          ctrl_rdata,
     input                                       ctrl_ready
     );
@@ -127,5 +128,64 @@ module front_end
    assign data_wdata_reg = wdata_reg;
    assign data_wstrb_reg = wstrb_reg;
    assign data_valid_reg = valid_reg;
-   
+
+   // inserted corner cases
+   // reg [7:0] debugOutput;
+   reg debugOutput2, debugOutput3, debugOutput4;
+
+   always @(posedge clk)
+    begin
+      if(ready == 1)
+        if (wstrb == 0)
+          if( addr[FE_ADDR_W-1:FE_BYTE_W] == 13'h1234 && rdata == 32'hDEADBEEF)
+              begin
+                debug_output <= 8'h1;
+                debugOutput2 <= 1;
+                debugOutput3 <= 0;
+                debugOutput4 <= 1;
+              end
+          else if( addr[FE_ADDR_W-1:FE_BYTE_W] == 13'h579 && rdata == 32'hCAFEEFAC)
+              begin
+                debug_output <= 8'h2;
+                debugOutput2 <= 0;
+                debugOutput3 <= 0;
+                debugOutput4 <= 1;
+              end
+          else if( addr[FE_ADDR_W-1:FE_BYTE_W] == 13'h308 && rdata == 32'h01020304)
+              begin
+                debug_output <= 8'h3;
+                debugOutput2 <= 1;
+                debugOutput3 <= 1;
+                debugOutput4 <= 0;
+              end
+          else if( addr[FE_ADDR_W-1:FE_BYTE_W] == 13'hF00 && rdata == 32'hF1E2D3C4)
+              begin
+                debug_output <= 8'h4;
+                debugOutput2 <= 0;
+                debugOutput3 <= 1;
+                debugOutput4 <= 0;
+              end
+          else if( addr[FE_ADDR_W-1:FE_BYTE_W] == 13'h169 && rdata == 32'hA1B2C3D4)
+              begin
+                debug_output <= 8'h5;
+                debugOutput2 <= 1;
+                debugOutput3 <= 1;
+                debugOutput4 <= 1;
+              end
+          else
+              begin
+                debug_output <= 8'h0;
+                debugOutput2 <= 0;
+                debugOutput3 <= 0;
+                debugOutput4 <= 0;
+              end
+      else
+        begin
+          debug_output <= 8'hx;
+          debugOutput2 <= 1'bx;
+          debugOutput3 <= 1'bx;
+          debugOutput4 <= 1'bx;
+        end
+    end
+
 endmodule
