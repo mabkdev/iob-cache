@@ -50,23 +50,32 @@ module iob_cache
     input [FE_NBYTES-1:0]                       wstrb,
     output [FE_DATA_W-1:0]                      rdata,
     output                                      ready,
+    output [7:0]                                debugOutput,     
 `ifdef CTRL_IO
     //control-status io
     input                                       force_inv_in, //force 1'b0 if unused
     output                                      force_inv_out, 
     input                                       wtb_empty_in, //force 1'b1 if unused
-    output                                      wtb_empty_out, 
+    output                                      wtb_empty_out
 `endif  
     //Slave i/f - Native
-    output                                      mem_valid,
-    output [BE_ADDR_W-1:0]                      mem_addr,
-    output [BE_DATA_W-1:0]                      mem_wdata,
-    output [BE_NBYTES-1:0]                      mem_wstrb,
-    input [BE_DATA_W-1:0]                       mem_rdata,
-    input                                       mem_ready
+    // output                                      mem_valid,
+    // output [BE_ADDR_W-1:0]                      mem_addr,
+    // output [BE_DATA_W-1:0]                      mem_wdata,
+    // output [BE_NBYTES-1:0]                      mem_wstrb,
+    // input [BE_DATA_W-1:0]                       mem_rdata,
+    // input                                       mem_ready
     );
 
-   
+
+   wire                                      mem_valid;
+   wire [BE_ADDR_W-1:0]                      mem_addr;
+   wire [BE_DATA_W-1:0]                      mem_wdata;
+   wire [BE_NBYTES-1:0]                      mem_wstrb;
+   wire [BE_DATA_W-1:0]                      mem_rdata;
+   reg                                       mem_ready;
+
+
    //internal signals (front-end inputs)
    wire                                         data_valid, data_ready;
    wire [FE_ADDR_W -1:FE_BYTE_W]                data_addr; 
@@ -140,6 +149,7 @@ module iob_cache
       .data_wdata_reg (data_wdata_reg),
       .data_wstrb_reg (data_wstrb_reg),
       //cache-control
+       .debug_output (debugOutput),
       .ctrl_valid (ctrl_valid),
       .ctrl_addr  (ctrl_addr),
       .ctrl_rdata (ctrl_rdata),
@@ -245,6 +255,25 @@ module iob_cache
       .mem_ready (mem_ready)  
       );
    
+`define MEM_ADDR_W 15
+`define MEM_DATA_W 32
+    iob_sp_ram #(
+       .DATA_W(`MEM_DATA_W),
+       .ADDR_W(`MEM_ADDR_W-2)
+      )
+    native_ram(
+         .clk(clk),
+         .en   (mem_valid),
+         .we   (mem_wstrb),
+         .addr (mem_addr[`MEM_ADDR_W-1:$clog2(`MEM_DATA_W/8)]),
+         .dout (mem_rdata),
+         .din  (mem_wdata)
+    );
+
+    always @(posedge clk)
+        begin
+         mem_ready <= mem_valid;
+        end
    
    
    generate
