@@ -172,6 +172,7 @@ module iob_cache_axi
       .data_wdata_reg (data_wdata_reg),
       .data_wstrb_reg (data_wstrb_reg),
       //cache-control
+      .debug_output(),       
       .ctrl_valid (ctrl_valid),
       .ctrl_addr  (ctrl_addr),
       .ctrl_rdata (ctrl_rdata),
